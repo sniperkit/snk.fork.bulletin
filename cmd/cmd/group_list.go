@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 
-	berror "github.com/maplain/bulletin/pkg/error"
 	"github.com/maplain/bulletin/pkg/group"
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/spf13/cobra"
 )
 
@@ -22,9 +21,7 @@ var (
 
 func groupListRun(cmd *cobra.Command, args []string) error {
 	if pipeline != "" {
-		dat, err := ioutil.ReadFile(pipeline)
-		berror.CheckError(err)
-		groups := group.GetGroups(string(dat))
+		groups := group.GetGroups(ioutils.ReadFile(pipeline))
 		if listGroupNames {
 			for _, g := range groups.Groups {
 				fmt.Printf("%s\n", g.Name)

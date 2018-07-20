@@ -2,9 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 
-	berror "github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/maplain/bulletin/pkg/job"
 	"github.com/spf13/cobra"
 )
@@ -22,9 +21,7 @@ var (
 
 func jobListRun(cmd *cobra.Command, args []string) error {
 	if pipeline != "" {
-		dat, err := ioutil.ReadFile(pipeline)
-		berror.CheckError(err)
-		jobs := job.GetJobs(string(dat))
+		jobs := job.GetJobs(ioutils.ReadFile(pipeline))
 		if listJobNames {
 			for _, j := range jobs.Jobs {
 				fmt.Printf("%s\n", j.Name)

@@ -53,7 +53,7 @@ func rootRun(cmd *cobra.Command, args []string) {
 	if pipeline != "" {
 		dat, err := ioutil.ReadFile(pipeline)
 		error.CheckError(err)
-		resources := resource.GetResources(string(dat))
+		resources := resource.GetResourcesFromString(string(dat))
 		for _, r := range resources.Resources {
 			fmt.Printf("%+v\n", r.String())
 		}

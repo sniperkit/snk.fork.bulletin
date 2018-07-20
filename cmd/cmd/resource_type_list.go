@@ -2,9 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 
-	berror "github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/maplain/bulletin/pkg/resource"
 	"github.com/spf13/cobra"
 )
@@ -24,9 +23,7 @@ var (
 
 func resourceTypeListRun(cmd *cobra.Command, args []string) error {
 	if pipeline != "" {
-		dat, err := ioutil.ReadFile(pipeline)
-		berror.CheckError(err)
-		resourceTypes := resource.GetResourceTypes(string(dat))
+		resourceTypes := resource.GetResourceTypes(ioutils.ReadFile(pipeline))
 		printTypes := make(map[string]interface{})
 		if listResourceTypeName {
 			for _, r := range resourceTypes.ResourceTypes {
