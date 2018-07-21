@@ -41,6 +41,34 @@ func (r *Resources) String() string {
 	return string(b[:])
 }
 
+func (r *Resources) Map() map[string]Resource {
+	res := make(map[string]Resource)
+	for _, r := range r.Resources {
+		res[r.Name] = r
+	}
+	return res
+}
+
+func NewResourcesFromMap(i map[string]Resource) Resources {
+	var rs []Resource
+	for _, v := range i {
+		rs = append(rs, v)
+	}
+	return Resources{rs}
+}
+
+func (r *Resources) UpdateWith(n Resources) Resources {
+	rm := r.Map()
+	nm := n.Map()
+	var res []Resource
+	for n, rmr := range rm {
+		if nr, ok := nm[n]; ok {
+			res = append(res, rmr.UpdateWith(nr))
+		}
+	}
+	return Resources{res}
+}
+
 type Resource struct {
 	Name string `yaml:"name"`
 	Type string `yaml:"type"`
@@ -55,6 +83,65 @@ func (r *Resource) String() string {
 	b, err := yaml.Marshal(*r)
 	berror.CheckError(err)
 	return string(b[:])
+}
+
+// simple replace
+//TODO: based on fields
+func (r *Resource) UpdateWith(n Resource) Resource {
+	res := *r
+	if !r.Equal(n) {
+		if n.Type != "" {
+			if r.Type != n.Type {
+				log.Fatalf("Can not update resource:\n%+v\nwith resource:\n%+v\n", r.String(), n.String())
+			}
+		}
+		if n.CheckEvery != "" {
+			res.CheckEvery = n.CheckEvery
+		}
+		if n.WebhookToken != "" {
+			res.WebhookToken = n.WebhookToken
+		}
+		if len(n.Tags) != 0 {
+			res.Tags = n.Tags
+		}
+		switch r.Type {
+		case GCSResourceType:
+			if !GCSResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateGCSResource(r.Source, n.Source)
+			}
+		case GithubReleaseResourceType:
+			if !GithubReleaseResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateGithubReleaseResource(r.Source, n.Source)
+			}
+		case BoshIOStemcellResourceType:
+			if !BoshIOStemcellResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateBoshIOStemcellResource(r.Source, n.Source)
+			}
+		case GitResourceType:
+			if !GitResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateGitResource(r.Source, n.Source)
+			}
+		case MergeRequestResourceType:
+			if !MergeRequestResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateMergeRequestResource(r.Source, n.Source)
+			}
+		case SlackNotificationResourceType:
+			if !SlackNotificationResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateSlackNotificationResource(r.Source, n.Source)
+			}
+		case PoolResourceType:
+			if !PoolResourceEqual(r.Source, n.Source) {
+				res.Source = UpdatePoolResource(r.Source, n.Source)
+			}
+		case SemverResourceType:
+			if !SemverResourceEqual(r.Source, n.Source) {
+				res.Source = UpdateSemverResource(r.Source, n.Source)
+			}
+		default:
+			fmt.Printf("Unrecognized resource type: %s", r.Type)
+		}
+	}
+	return res
 }
 
 func (r *Resource) Equal(n Resource) bool {
@@ -284,6 +371,7 @@ func SemverResourceEqual(a, b interface{}) bool {
 	if rsourceBase != nsourceBase {
 		return false
 	}
+	//TODO: add support for other drivers
 	switch rsourceBase.Driver {
 	//	case SemverResourceDriverGit:
 	//		if !SemverGitResourceEqual(a, b) {
@@ -437,6 +525,10 @@ type GitResourceHttpsTunnel struct {
 
 type GitResourceGitConfigs struct {
 	configs []map[string]string
+}
+
+func (g *GitResourceGitConfigs) Len() int {
+	return len(g.configs)
 }
 
 func (g *GitResourceGitConfigs) Equal(n GitResourceGitConfigs) bool {
@@ -600,4 +692,263 @@ type SemverGCSResource struct {
 
 func (s *SemverGCSResource) Equal(n SemverGCSResource) bool {
 	return *s == n
+}
+
+func UpdateGCSResource(a, b interface{}) interface{} {
+	rsource, err := GetGCSResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized MergeRequestResource: %+v\n", a)
+	}
+	nsource, err := GetGCSResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized MergeRequestResource: %+v\n", b)
+	}
+	if nsource.Bucket != "" {
+		rsource.Bucket = nsource.Bucket
+	}
+	if nsource.JsonKey != "" {
+		rsource.JsonKey = nsource.JsonKey
+	}
+	if nsource.Regexp != "" {
+		rsource.Regexp = nsource.Regexp
+	}
+	if nsource.VersionedFile != "" {
+		rsource.VersionedFile = nsource.VersionedFile
+	}
+	return rsource
+}
+
+func UpdateGithubReleaseResource(a, b interface{}) interface{} {
+	rsource, err := GetGithubReleaseResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized GithubReleaseResource: %+v\n", a)
+	}
+	nsource, err := GetGithubReleaseResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized GithubReleaseResource: %+v\n", b)
+	}
+	if nsource.Owner != "" {
+		rsource.Owner = nsource.Owner
+	}
+	if nsource.Repository != "" {
+		rsource.Repository = nsource.Repository
+	}
+	if nsource.AccessToken != "" {
+		rsource.AccessToken = nsource.AccessToken
+	}
+	if nsource.GithubApiUrl != "" {
+		rsource.GithubApiUrl = nsource.GithubApiUrl
+	}
+	if nsource.TagFilter != "" {
+		rsource.TagFilter = nsource.TagFilter
+	}
+
+	// reset all boolean values
+	rsource.Insecure = nsource.Insecure
+	rsource.Release = nsource.Release
+	rsource.PreRelease = nsource.PreRelease
+	rsource.Drafts = nsource.Drafts
+	return rsource
+}
+
+func UpdateBoshIOStemcellResource(a, b interface{}) interface{} {
+	rsource, err := GetBoshIOStemcellResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized BoshIOStemcellResource: %+v\n", a)
+	}
+	nsource, err := GetBoshIOStemcellResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized BoshIOStemcellResource: %+v\n", b)
+	}
+	if nsource.Repository != "" {
+		rsource.Repository = nsource.Repository
+	}
+	return rsource
+}
+
+func UpdateGitResource(a, b interface{}) interface{} {
+	rsource, err := GetGitResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized GitResource: %+v\n", a)
+	}
+	nsource, err := GetGitResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized GitResource: %+v\n", b)
+	}
+	if nsource.Uri != "" {
+		rsource.Uri = nsource.Uri
+	}
+	if nsource.Branch != "" {
+		rsource.Branch = nsource.Branch
+	}
+	if nsource.PrivateKey != "" {
+		rsource.PrivateKey = nsource.PrivateKey
+	}
+	if nsource.Username != "" {
+		rsource.Username = nsource.Username
+	}
+	if nsource.Password != "" {
+		rsource.Password = nsource.Password
+	}
+	if nsource.TagFilter != "" {
+		rsource.TagFilter = nsource.TagFilter
+	}
+	if nsource.GpgKeyserver != "" {
+		rsource.GpgKeyserver = nsource.GpgKeyserver
+	}
+	if nsource.GitCryptKey != "" {
+		rsource.GitCryptKey = nsource.GitCryptKey
+	}
+	rsource.SkipSslVerification = nsource.SkipSslVerification
+	rsource.DisableCiSkip = nsource.DisableCiSkip
+	if len(nsource.Paths) != 0 {
+		rsource.Paths = nsource.Paths
+	}
+	if len(nsource.IgnorePaths) != 0 {
+		rsource.IgnorePaths = nsource.IgnorePaths
+	}
+	if len(nsource.CommitVerificationKeys) != 0 {
+		rsource.CommitVerificationKeys = nsource.CommitVerificationKeys
+	}
+	if len(nsource.CommitVerificationKeyIds) != 0 {
+		rsource.CommitVerificationKeyIds = nsource.CommitVerificationKeyIds
+	}
+	// no partial update on git config
+	if nsource.GitConfig.Len() != 0 {
+		rsource.GitConfig = nsource.GitConfig
+	}
+	if nsource.HttpsTunnel.ProxyHost != "" {
+		rsource.HttpsTunnel.ProxyHost = nsource.HttpsTunnel.ProxyHost
+	}
+	if nsource.HttpsTunnel.ProxyPort != "" {
+		rsource.HttpsTunnel.ProxyPort = nsource.HttpsTunnel.ProxyPort
+	}
+	if nsource.HttpsTunnel.ProxyUser != "" {
+		rsource.HttpsTunnel.ProxyUser = nsource.HttpsTunnel.ProxyUser
+	}
+	if nsource.HttpsTunnel.ProxyPassword != "" {
+		rsource.HttpsTunnel.ProxyPassword = nsource.HttpsTunnel.ProxyPassword
+	}
+	return rsource
+}
+
+func UpdateMergeRequestResource(a, b interface{}) interface{} {
+	rsource, err := GetMergeRequestResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized MergeRequestResource: %+v\n", a)
+	}
+	nsource, err := GetMergeRequestResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized MergeRequestResource: %+v\n", b)
+	}
+	if nsource.Uri != "" {
+		rsource.Uri = nsource.Uri
+	}
+	if nsource.PrivateToken != "" {
+		rsource.PrivateToken = nsource.PrivateToken
+	}
+	if nsource.PrivateKey != "" {
+		rsource.PrivateKey = nsource.PrivateKey
+	}
+	if nsource.PrivateToken != "" {
+		rsource.PrivateToken = nsource.PrivateToken
+	}
+	if nsource.Username != "" {
+		rsource.Username = nsource.Username
+	}
+	if nsource.Password != "" {
+		rsource.Password = nsource.Password
+	}
+	rsource.NoSSL = nsource.NoSSL
+	rsource.SkipSslVerification = nsource.SkipSslVerification
+	return rsource
+}
+
+func UpdateSlackNotificationResource(a, b interface{}) interface{} {
+	rsource, err := GetSlackNotificationResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized SlackNotificationResource: %+v\n", a)
+	}
+	nsource, err := GetSlackNotificationResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized SlackNotificationResource: %+v\n", b)
+	}
+	if nsource.URL != "" {
+		rsource.URL = nsource.URL
+	}
+	return rsource
+}
+
+func UpdatePoolResource(a, b interface{}) interface{} {
+	rsource, err := GetPoolResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized PoolResource: %+v\n", a)
+	}
+	nsource, err := GetPoolResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized PoolResource: %+v\n", b)
+	}
+	if nsource.Uri != "" {
+		rsource.Uri = nsource.Uri
+	}
+	if nsource.Branch != "" {
+		rsource.Branch = nsource.Branch
+	}
+	if nsource.Pool != "" {
+		rsource.Pool = nsource.Pool
+	}
+	if nsource.PrivateKey != "" {
+		rsource.PrivateKey = nsource.PrivateKey
+	}
+	if nsource.Username != "" {
+		rsource.Username = nsource.Username
+	}
+	if nsource.Password != "" {
+		rsource.Password = nsource.Password
+	}
+	if nsource.RetryDelay != "" {
+		rsource.RetryDelay = nsource.RetryDelay
+	}
+	return rsource
+}
+
+func UpdateSemverResource(a, b interface{}) interface{} {
+	rsource, err := GetSemverResourceBase(a)
+	if err != nil {
+		log.Fatalf("Unrecognized SemverResource: %+v\n", a)
+	}
+	switch rsource.Driver {
+	case SemverResourceDriverGCS:
+		return UpdateSemverGCSResource(a, b)
+	default:
+		log.Fatalf("unsupported semver resource driver:%s", rsource.Driver)
+	}
+	return rsource
+}
+
+func UpdateSemverGCSResource(a, b interface{}) interface{} {
+	rsource, err := GetSemverGCSResource(a)
+	if err != nil {
+		log.Fatalf("Unrecognized SemverGCSResource: %+v\n", a)
+	}
+	nsource, err := GetSemverGCSResource(b)
+	if err != nil {
+		log.Fatalf("Unrecognized SemverGCSResource: %+v\n", b)
+	}
+	if nsource.InitialVersion != "" {
+		rsource.InitialVersion = nsource.InitialVersion
+	}
+	if nsource.Driver != "" {
+		rsource.Driver = nsource.Driver
+	}
+	if nsource.Bucket != "" {
+		rsource.Bucket = nsource.Bucket
+	}
+	if nsource.Key != "" {
+		rsource.Key = nsource.Key
+	}
+	if nsource.JsonKey != "" {
+		rsource.JsonKey = nsource.JsonKey
+	}
+	return rsource
 }

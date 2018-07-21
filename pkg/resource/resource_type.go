@@ -86,7 +86,7 @@ func (r *ResourceType) Equal(n ResourceType) bool {
 	return true
 }
 
-func GetResourceTypes(data string) ResourceTypes {
+func GetResourceTypesFromString(data string) ResourceTypes {
 	r := ResourceTypes{}
 	err := yaml.Unmarshal([]byte(data), &r)
 	if err != nil {
@@ -109,7 +109,7 @@ func GetLocalResourceTypes(target string) ResourceTypeSet {
 	targetFile := filepath.Join(targetDir, resourceTypesFile)
 	ioutils.CreateFileIfNotExist(targetFile)
 	content := ioutils.ReadFile(targetFile)
-	resourceTypes := GetResourceTypes(content)
+	resourceTypes := GetResourceTypesFromString(content)
 	res := ResourceTypeSet{}
 	for _, rt := range resourceTypes.ResourceTypes {
 		res.Add(rt)

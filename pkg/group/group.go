@@ -22,7 +22,7 @@ func (g *Group) String() string {
 	return string(b[:])
 }
 
-func GetGroups(data string) Groups {
+func GetGroupsFromString(data string) Groups {
 	g := Groups{}
 	err := yaml.Unmarshal([]byte(data), &g)
 	berror.CheckError(err)

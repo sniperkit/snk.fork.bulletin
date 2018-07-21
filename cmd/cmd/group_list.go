@@ -20,22 +20,21 @@ var (
 )
 
 func groupListRun(cmd *cobra.Command, args []string) error {
-	if pipeline != "" {
-		groups := group.GetGroups(ioutils.ReadFile(pipeline))
-		if listGroupNames {
-			for _, g := range groups.Groups {
-				fmt.Printf("%s\n", g.Name)
+	datas := ioutils.ReadFileDefaultStdin(pipeline)
+	groups := group.GetGroupsFromString(datas)
+	if listGroupNames {
+		for _, g := range groups.Groups {
+			fmt.Printf("%s\n", g.Name)
+		}
+	} else {
+		for _, g := range groups.Groups {
+			if groupName == "" {
+				fmt.Printf("%+v\n", g.String())
+				continue
 			}
-		} else {
-			for _, g := range groups.Groups {
-				if groupName == "" {
-					fmt.Printf("%+v\n", g.String())
-					continue
-				}
-				if groupName != "" && groupName == g.Name {
-					fmt.Printf("%+v\n", g.String())
-					continue
-				}
+			if groupName != "" && groupName == g.Name {
+				fmt.Printf("%+v\n", g.String())
+				continue
 			}
 		}
 	}

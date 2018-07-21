@@ -20,22 +20,21 @@ var (
 )
 
 func jobListRun(cmd *cobra.Command, args []string) error {
-	if pipeline != "" {
-		jobs := job.GetJobs(ioutils.ReadFile(pipeline))
-		if listJobNames {
-			for _, j := range jobs.Jobs {
-				fmt.Printf("%s\n", j.Name)
+	datas := ioutils.ReadFileDefaultStdin(pipeline)
+	jobs := job.GetJobsFromString(datas)
+	if listJobNames {
+		for _, j := range jobs.Jobs {
+			fmt.Printf("%s\n", j.Name)
+		}
+	} else {
+		for _, j := range jobs.Jobs {
+			if jobName == "" {
+				fmt.Printf("%+v\n", j.String())
+				continue
 			}
-		} else {
-			for _, j := range jobs.Jobs {
-				if jobName == "" {
-					fmt.Printf("%+v\n", j.String())
-					continue
-				}
-				if jobName != "" && jobName == j.Name {
-					fmt.Printf("%+v\n", j.String())
-					continue
-				}
+			if jobName != "" && jobName == j.Name {
+				fmt.Printf("%+v\n", j.String())
+				continue
 			}
 		}
 	}

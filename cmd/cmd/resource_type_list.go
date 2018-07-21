@@ -22,44 +22,43 @@ var (
 )
 
 func resourceTypeListRun(cmd *cobra.Command, args []string) error {
-	if pipeline != "" {
-		resourceTypes := resource.GetResourceTypes(ioutils.ReadFile(pipeline))
-		printTypes := make(map[string]interface{})
-		if listResourceTypeName {
-			for _, r := range resourceTypes.ResourceTypes {
-				fmt.Printf("%s\n", r.Name)
+	datas := ioutils.ReadFileDefaultStdin(pipeline)
+	resourceTypes := resource.GetResourceTypesFromString(datas)
+	printTypes := make(map[string]interface{})
+	if listResourceTypeName {
+		for _, r := range resourceTypes.ResourceTypes {
+			fmt.Printf("%s\n", r.Name)
+		}
+	} else if listResourceTypeType {
+		for _, r := range resourceTypes.ResourceTypes {
+			printTypes[r.Type] = nil
+		}
+	} else {
+		for _, r := range resourceTypes.ResourceTypes {
+			if resourceTypeType == "" && resourceTypeName == "" {
+				fmt.Printf("%+v\n", r.String())
+				continue
 			}
-		} else if listResourceTypeType {
-			for _, r := range resourceTypes.ResourceTypes {
-				printTypes[r.Type] = nil
-			}
-		} else {
-			for _, r := range resourceTypes.ResourceTypes {
-				if resourceTypeType == "" && resourceTypeName == "" {
+			if resourceTypeType != "" && resourceTypeType == r.Type {
+				if resourceTypeName != "" && resourceTypeName == r.Name {
 					fmt.Printf("%+v\n", r.String())
 					continue
 				}
-				if resourceTypeType != "" && resourceTypeType == r.Type {
-					if resourceTypeName != "" && resourceTypeName == r.Name {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
-					if resourceTypeName == "" {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
+				if resourceTypeName == "" {
+					fmt.Printf("%+v\n", r.String())
+					continue
 				}
-				if resourceTypeName != "" && resourceTypeName == r.Name {
-					if resourceTypeType == "" {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
+			}
+			if resourceTypeName != "" && resourceTypeName == r.Name {
+				if resourceTypeType == "" {
+					fmt.Printf("%+v\n", r.String())
+					continue
 				}
 			}
 		}
-		for t, _ := range printTypes {
-			fmt.Printf("%s\n", t)
-		}
+	}
+	for t, _ := range printTypes {
+		fmt.Printf("%s\n", t)
 	}
 	return nil
 }

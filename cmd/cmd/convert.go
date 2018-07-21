@@ -26,7 +26,7 @@ func convertRun(cmd *cobra.Command, args []string) error {
 	p := ioutils.ReadFile(pipeline)
 
 	// update resource types
-	rt := resource.GetResourceTypes(p)
+	rt := resource.GetResourceTypesFromString(p)
 	savedRT := resource.GetLocalResourceTypes(target)
 	for _, r := range rt.ResourceTypes {
 		savedRT.Add(r)

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/maplain/bulletin/pkg/resource"
 	"github.com/spf13/cobra"
 )
@@ -21,44 +22,44 @@ var (
 )
 
 func resourceListRun(cmd *cobra.Command, args []string) error {
-	if pipeline != "" {
-		resources := resource.GetResourcesFromFile(pipeline)
-		printTypes := make(map[string]interface{})
-		if listResourceNames {
-			for _, r := range resources.Resources {
-				fmt.Printf("%s\n", r.Name)
+
+	datas := ioutils.ReadFileDefaultStdin(pipeline)
+	resources := resource.GetResourcesFromString(datas)
+	printTypes := make(map[string]interface{})
+	if listResourceNames {
+		for _, r := range resources.Resources {
+			fmt.Printf("%s\n", r.Name)
+		}
+	} else if listResourceTypes {
+		for _, r := range resources.Resources {
+			printTypes[r.Type] = nil
+		}
+	} else {
+		for _, r := range resources.Resources {
+			if resourceType == "" && resourceName == "" {
+				fmt.Printf("%+v\n", r.String())
+				continue
 			}
-		} else if listResourceTypes {
-			for _, r := range resources.Resources {
-				printTypes[r.Type] = nil
-			}
-		} else {
-			for _, r := range resources.Resources {
-				if resourceType == "" && resourceName == "" {
+			if resourceType != "" && resourceType == r.Type {
+				if resourceName != "" && resourceName == r.Name {
 					fmt.Printf("%+v\n", r.String())
 					continue
 				}
-				if resourceType != "" && resourceType == r.Type {
-					if resourceName != "" && resourceName == r.Name {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
-					if resourceName == "" {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
+				if resourceName == "" {
+					fmt.Printf("%+v\n", r.String())
+					continue
 				}
-				if resourceName != "" && resourceName == r.Name {
-					if resourceType == "" {
-						fmt.Printf("%+v\n", r.String())
-						continue
-					}
+			}
+			if resourceName != "" && resourceName == r.Name {
+				if resourceType == "" {
+					fmt.Printf("%+v\n", r.String())
+					continue
 				}
 			}
 		}
-		for k, _ := range printTypes {
-			fmt.Printf("%s\n", k)
-		}
+	}
+	for k, _ := range printTypes {
+		fmt.Printf("%s\n", k)
 	}
 	return nil
 }

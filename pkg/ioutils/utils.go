@@ -13,6 +13,17 @@ func ReadFile(name string) string {
 	return string(dat)
 }
 
+func ReadFileDefaultStdin(name string) string {
+	if name != "" {
+		return ReadFile(name)
+	} else {
+		dat, err := ioutil.ReadAll(os.Stdin)
+		berror.CheckError(err)
+		return string(dat)
+	}
+	return ""
+}
+
 func CreateDirIfNotExist(dir string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)

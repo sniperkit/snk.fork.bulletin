@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/maplain/bulletin/pkg/resource"
 	"github.com/spf13/cobra"
 	"gitlab.eng.vmware.com/PKS/pks-networking/pkg/printer"
@@ -50,16 +49,13 @@ func init() {
 }
 
 func rootRun(cmd *cobra.Command, args []string) {
-	if pipeline != "" {
-		dat, err := ioutil.ReadFile(pipeline)
-		error.CheckError(err)
-		resources := resource.GetResourcesFromString(string(dat))
-		for _, r := range resources.Resources {
-			fmt.Printf("%+v\n", r.String())
-		}
-		resourceTypes := resource.GetResourceTypes(string(dat))
-		for _, r := range resourceTypes.ResourceTypes {
-			fmt.Printf("%+v\n", r.String())
-		}
+	datas := ioutils.ReadFileDefaultStdin(pipeline)
+	resources := resource.GetResourcesFromString(datas)
+	for _, r := range resources.Resources {
+		fmt.Printf("%+v\n", r.String())
+	}
+	resourceTypes := resource.GetResourceTypesFromString(datas)
+	for _, r := range resourceTypes.ResourceTypes {
+		fmt.Printf("%+v\n", r.String())
 	}
 }

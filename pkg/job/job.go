@@ -5,60 +5,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-var data = `
-jobs:
-- name: run-build-master
-  serial: true
-  plan:
-    - aggregate:
-      - get: git-pks-networking-master
-        trigger: true
-
-    - task: run-build
-      file: git-pks-networking-master/ci/tasks/build.yml
-      input_mapping:
-        git-pks-networking: git-pks-networking-master
-
-  
-  on_failure:
-    put: notify
-    params:
-      channel: pks-ci-bots
-      attachments:
-      - color: danger
-        text: $BUILD_PIPELINE_NAME build failed. See results at <https://((ci_url))/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME>
-
-- name: run-build-merge-request
-  serial: true
-  plan:
-  - aggregate:
-    - get: git-pks-networking-merge-request
-      version: every
-      trigger: true
-
-  - put: git-pks-networking-merge-request
-    params:
-      repository: git-pks-networking-merge-request
-      status: pending
-
-  - task: run-build
-    file: git-pks-networking-merge-request/ci/tasks/build.yml
-    input_mapping:
-      git-pks-networking: git-pks-networking-merge-request
-
-    on_success:
-      put: git-pks-networking-merge-request
-      params:
-        repository: git-pks-networking-merge-request
-        status: success
-
-    on_failure:
-      put: git-pks-networking-merge-request
-      params:
-        repository: git-pks-networking-merge-request
-        status: failed
-`
-
 type Jobs struct {
 	Jobs []Job `yaml:"jobs"`
 }
@@ -139,7 +85,7 @@ func (j *Job) String() string {
 	return string(b[:])
 }
 
-func GetJobs(data string) Jobs {
+func GetJobsFromString(data string) Jobs {
 	j := Jobs{}
 	err := yaml.Unmarshal([]byte(data), &j)
 	berror.CheckError(err)
