@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	GCSResourceType               = "gcs"
+	GCSResourceType               = "gcs-resource"
 	GithubReleaseResourceType     = "github-release"
 	BoshIOStemcellResourceType    = "bosh-io-stemcell"
 	GitResourceType               = "git"
@@ -64,6 +64,8 @@ func (r *Resources) UpdateWith(n Resources) Resources {
 	for n, rmr := range rm {
 		if nr, ok := nm[n]; ok {
 			res = append(res, rmr.UpdateWith(nr))
+		} else {
+			res = append(res, rmr)
 		}
 	}
 	return Resources{res}

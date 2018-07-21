@@ -21,9 +21,6 @@ var (
 )
 
 func updateRun(cmd *cobra.Command, args []string) error {
-	if pipeline == "" {
-		return nil
-	}
 	datas := ioutils.ReadFileDefaultStdin(pipeline)
 	// update resource types
 	pp := ppl.GetPipelineFromString(datas)
