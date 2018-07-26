@@ -1,6 +1,8 @@
 package types
 
-import yaml "gopkg.in/yaml.v2"
+import (
+	yaml "gopkg.in/yaml.v2"
+)
 
 type Comparator struct {
 	s1  []string
