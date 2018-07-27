@@ -8,7 +8,22 @@ import (
 )
 
 type Jobs struct {
-	Jobs []JobRef `yaml:"jobs"`
+	Jobs  []JobRef `yaml:"jobs"`
+	cache map[string]int
+}
+
+func (j *Jobs) AddDecorator(job, task string, d template.TemplateRef) {
+	if j.cache == nil {
+		j.cache = make(map[string]int)
+		for i, jr := range j.Jobs {
+			j.cache[jr.Name] = i
+		}
+	}
+	i, ok := j.cache[job]
+	if !ok {
+		return
+	}
+	j.Jobs[i].AddDecorator(task, d)
 }
 
 func (j *Jobs) String() string {
@@ -28,12 +43,27 @@ type JobRef struct {
 	Plan        []StepRef `yaml:"plan"`
 	job.JobBase `yaml:",inline"`
 	//Decorators []FuncRef `yaml:"decorators,omitempty"`
+	cache map[string]int
 }
 
 func (j *JobRef) String() string {
 	b, err := yaml.Marshal(*j)
 	berror.CheckError(err)
 	return string(b[:])
+}
+
+func (j *JobRef) AddDecorator(task string, d template.TemplateRef) {
+	if j.cache == nil {
+		j.cache = make(map[string]int)
+		for i, s := range j.Plan {
+			j.cache[s.Name] = i
+		}
+	}
+	i, ok := j.cache[task]
+	if !ok {
+		return
+	}
+	j.Plan[i].Decorators = append(j.Plan[i].Decorators, d)
 }
 
 type StepRef struct {

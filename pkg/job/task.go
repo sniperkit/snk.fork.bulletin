@@ -25,10 +25,17 @@ type Step struct {
 	StepModifiers `yaml:",inline"`
 }
 
+type StepHooks struct {
+	OnSuccess interface{} `yaml:"on_success,omitempty"`
+	OnFailure interface{} `yaml:"on_failure,omitempty"`
+	OnAbort   interface{} `yaml:"on_abort,omitempty"`
+	Ensure    interface{} `yaml:"ensure,omitempty"`
+}
+
 type StepModifiers struct {
 	Tags     []string `yaml:"tags,omitempty"`
 	Timeout  string   `yaml:"timeout,omitempty"`
-	Attempts int      `yaml:"attempts,omitempty"`
+	Attempts string   `yaml:"attempts,omitempty"`
 }
 
 type GetStep struct {

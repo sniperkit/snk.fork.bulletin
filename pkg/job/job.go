@@ -33,13 +33,6 @@ type Job struct {
 	StepHooks `yaml:",inline"`
 }
 
-type StepHooks struct {
-	OnSuccess interface{} `yaml:"on_success,omitempty"`
-	OnFailure interface{} `yaml:"on_failure,omitempty"`
-	OnAbort   interface{} `yaml:"on_abort,omitempty"`
-	Ensure    interface{} `yaml:"ensure,omitempty"`
-}
-
 func (j *Job) String() string {
 	b, err := yaml.Marshal(*j)
 	berror.CheckError(err)

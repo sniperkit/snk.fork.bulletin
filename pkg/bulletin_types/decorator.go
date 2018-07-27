@@ -3,7 +3,9 @@ package bulletin_types
 import (
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
+	"strings"
 
 	berror "github.com/maplain/bulletin/pkg/error"
 	"github.com/maplain/bulletin/pkg/ioutils"
@@ -17,6 +19,42 @@ const (
 	decoratorsDir  = "decorators"
 	decoratorsFile = "decorators.yml"
 )
+
+type StepDecoratorDefs struct {
+	Decorators []StepDecoratorDef `yaml:"decorators"`
+}
+
+func (d *StepDecoratorDefs) String() string {
+	b, err := yaml.Marshal(*d)
+	berror.CheckError(err)
+	return string(b[:])
+}
+
+func GetStepDecoratorDefsFromString(data string) StepDecoratorDefs {
+	r := StepDecoratorDefs{}
+	err := yaml.Unmarshal([]byte(data), &r)
+	berror.CheckError(err)
+	return r
+}
+
+type StepDecoratorDef struct {
+	template.TemplateRef `yaml:",inline"`
+	Decorate             []string `yaml:"decorate"`
+}
+
+func (d *StepDecoratorDef) GetJobTask(s string) (string, string) {
+	res := strings.Split(s, "/")
+	if len(res) != 2 {
+		log.Fatalf("error: invalid decorate target %s", s)
+	}
+	return res[0], res[1]
+}
+
+func (d *StepDecoratorDef) String() string {
+	b, err := yaml.Marshal(*d)
+	berror.CheckError(err)
+	return string(b[:])
+}
 
 type Decorators struct {
 	Decorators []Decorator `yaml:"decorators"`
@@ -48,14 +86,9 @@ type Decorator struct {
 	Before               []interface{} `yaml:"before,omitempty"`
 	After                []interface{} `yaml:"after,omitempty"`
 	// step hook
-	OnSuccess interface{} `yaml:"on_success,omitempty"`
-	OnFailure interface{} `yaml:"on_failure,omitempty"`
-	OnAbort   interface{} `yaml:"on_abort,omitempty"`
-	Ensure    interface{} `yaml:"ensure,omitempty"`
+	job.StepHooks `yaml:",inline"`
 	// step modifier
-	Tags     []string `yaml:"tags,omitempty"`
-	Timeout  string   `yaml:"timeout,omitempty"`
-	Attempts string   `yaml:"attempts,omitempty"`
+	job.StepModifiers `yaml:",inline"`
 }
 
 func (o *Decorator) Populate(r template.TemplateRef) (Decorator, error) {
