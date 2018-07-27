@@ -3,9 +3,18 @@ package bulletin_types
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	berror "github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/ioutils"
+	"github.com/maplain/bulletin/pkg/types"
+	template "github.com/maplain/yamltemplate"
 	yaml "gopkg.in/yaml.v2"
+)
+
+const (
+	stepsDir  = "steps"
+	stepsFile = "steps.yml"
 )
 
 type Steps struct {
@@ -19,7 +28,7 @@ func (s *Steps) String() string {
 	return string(b[:])
 }
 
-func (s *Steps) Populate(r FuncRef) (Step, error) {
+func (s *Steps) Populate(r template.TemplateRef) (Step, error) {
 	if s.cache == nil {
 		s.cache = make(map[string]Step)
 		for _, st := range s.Steps {
@@ -34,8 +43,8 @@ func (s *Steps) Populate(r FuncRef) (Step, error) {
 }
 
 type Step struct {
-	FuncDef `yaml:",inline"`
-	Step    interface{} `yaml:"step"`
+	template.TemplateDef `yaml:",inline"`
+	Step                 interface{} `yaml:"step"`
 }
 
 func (s *Step) String() string {
@@ -44,7 +53,7 @@ func (s *Step) String() string {
 	return string(b[:])
 }
 
-func (s *Step) Populate(r FuncRef) (Step, error) {
+func (s *Step) Populate(r template.TemplateRef) (Step, error) {
 	var err error
 	s.Step, err = s.Replace(r, s.Step)
 	if err != nil {
@@ -55,6 +64,18 @@ func (s *Step) Populate(r FuncRef) (Step, error) {
 
 func (s *Step) GetStep() interface{} {
 	return s.Step
+}
+
+func (s Step) Equal(i interface{}) bool {
+	switch v := i.(type) {
+	case Step:
+		return false
+	case *Step:
+		return false
+	default:
+		fmt.Printf("unsupported type %s\n", v)
+	}
+	return true
 }
 
 func GetStepsFromString(data string) Steps {
@@ -82,4 +103,27 @@ func GetStep(s string) (Step, error) {
 	default:
 		return Step{}, errors.New(fmt.Sprintf("not a Step"))
 	}
+}
+
+func GetLocalSteps(target string) Steps {
+	targetDir := filepath.Join(target, stepsDir)
+	ioutils.CreateDirIfNotExist(targetDir)
+	targetFile := filepath.Join(targetDir, stepsFile)
+	ioutils.CreateFileIfNotExist(targetFile)
+	content := ioutils.ReadFile(targetFile)
+	steps := GetStepsFromString(content)
+	resSet := types.NewSet()
+	for _, d := range steps.Steps {
+		resSet.Add(d)
+	}
+	res := Steps{}
+	for _, d := range resSet.Get() {
+		switch v := d.(type) {
+		case Step:
+			res.Steps = append(res.Steps, v)
+		default:
+			fmt.Printf("unsupported type %s\n", v)
+		}
+	}
+	return res
 }

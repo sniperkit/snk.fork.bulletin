@@ -90,3 +90,42 @@ func StringSliceEqual(a, b []string) bool {
 	}
 	return true
 }
+
+type Comparable interface {
+	Equal(interface{}) bool
+}
+
+type Set interface {
+	Get() []Comparable
+	Add(Comparable)
+}
+
+// don't complain, a very inefficient implementation
+type SimpleSet struct {
+	ca []Comparable
+}
+
+func NewSet(eles ...Comparable) *SimpleSet {
+	res := &SimpleSet{}
+	for _, ele := range eles {
+		res.Add(ele)
+	}
+	return res
+}
+
+func (o *SimpleSet) Get() []Comparable {
+	return o.ca
+}
+
+func (o *SimpleSet) Add(t Comparable) {
+	found := false
+	for _, r := range o.ca {
+		if r.Equal(t) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		o.ca = append(o.ca, t)
+	}
+}

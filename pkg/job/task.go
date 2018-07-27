@@ -126,3 +126,27 @@ func getTaskStepFromString(data string) TaskStep {
 	berror.CheckError(err)
 	return j
 }
+
+func GetPutStep(s interface{}) (PutStep, error) {
+	d, err := yaml.Marshal(&s)
+	if err != nil {
+		return PutStep{}, err
+	}
+	t, err := GetType(string(d))
+	if err != nil {
+		return PutStep{}, err
+	}
+	switch t {
+	case PutStepType:
+		return getPutStepFromString(string(d)), nil
+	default:
+		return PutStep{}, errors.New(fmt.Sprintf("not a put Step"))
+	}
+}
+
+func getPutStepFromString(data string) PutStep {
+	j := PutStep{}
+	err := yaml.Unmarshal([]byte(data), &j)
+	berror.CheckError(err)
+	return j
+}

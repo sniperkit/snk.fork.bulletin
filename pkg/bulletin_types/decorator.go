@@ -3,10 +3,19 @@ package bulletin_types
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	berror "github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/maplain/bulletin/pkg/job"
+	"github.com/maplain/bulletin/pkg/types"
+	template "github.com/maplain/yamltemplate"
 	yaml "gopkg.in/yaml.v2"
+)
+
+const (
+	decoratorsDir  = "decorators"
+	decoratorsFile = "decorators.yml"
 )
 
 type Decorators struct {
@@ -20,7 +29,7 @@ func (d *Decorators) String() string {
 	return string(b[:])
 }
 
-func (d *Decorators) Populate(r FuncRef) (Decorator, error) {
+func (d *Decorators) Populate(r template.TemplateRef) (Decorator, error) {
 	if d.cache == nil {
 		d.cache = make(map[string]Decorator)
 		for _, dd := range d.Decorators {
@@ -35,9 +44,9 @@ func (d *Decorators) Populate(r FuncRef) (Decorator, error) {
 }
 
 type Decorator struct {
-	FuncDef `yaml:",inline"`
-	Before  []interface{} `yaml:"before,omitempty"`
-	After   []interface{} `yaml:"after,omitempty"`
+	template.TemplateDef `yaml:",inline"`
+	Before               []interface{} `yaml:"before,omitempty"`
+	After                []interface{} `yaml:"after,omitempty"`
 	// step hook
 	OnSuccess interface{} `yaml:"on_success,omitempty"`
 	OnFailure interface{} `yaml:"on_failure,omitempty"`
@@ -49,7 +58,7 @@ type Decorator struct {
 	Attempts string   `yaml:"attempts,omitempty"`
 }
 
-func (o *Decorator) Populate(r FuncRef) (Decorator, error) {
+func (o *Decorator) Populate(r template.TemplateRef) (Decorator, error) {
 	var err error
 	for i, _ := range o.Before {
 		o.Before[i], err = o.Replace(r, o.Before[i])
@@ -79,16 +88,16 @@ func (o *Decorator) Populate(r FuncRef) (Decorator, error) {
 	if err != nil {
 		return *o, err
 	}
-	o.Timeout, err = o.ReplaceString(r, o.Timeout)
+	o.Timeout, err = o.ReplaceOnString(r, o.Timeout)
 	if err != nil {
 		return *o, err
 	}
-	o.Attempts, err = o.ReplaceString(r, o.Attempts)
+	o.Attempts, err = o.ReplaceOnString(r, o.Attempts)
 	if err != nil {
 		return *o, err
 	}
 	for i, _ := range o.Tags {
-		o.Tags[i], err = o.ReplaceString(r, o.Tags[i])
+		o.Tags[i], err = o.ReplaceOnString(r, o.Tags[i])
 		if err != nil {
 			return *o, err
 		}
@@ -106,7 +115,26 @@ func (d *Decorator) Decorate(s interface{}) (interface{}, error) {
 		return s, err
 	}
 	switch t {
+	//	case job.GetStepType:
+	//		fallthrough
+	case job.PutStepType:
+		task, err := job.GetPutStep(s)
+		if err != nil {
+			return s, err
+		}
+		if d.OnSuccess != nil {
+			task.OnSuccess = d.OnSuccess
+		}
+		if d.OnFailure != nil {
+			task.OnFailure = d.OnFailure
+		}
+		return task, nil
 	case job.TaskStepType:
+		//	case job.AggregateSteptype:
+		//		fallthrough
+		//	case job.DoStepType:
+		//		fallthrough
+		//	case job.TryStepType:
 		task, err := job.GetTaskStep(s)
 		if err != nil {
 			return s, err
@@ -119,7 +147,7 @@ func (d *Decorator) Decorate(s interface{}) (interface{}, error) {
 		}
 		return task, nil
 	default:
-		return s, errors.New("unsupported decorator type")
+		return s, errors.New(fmt.Sprintf("unsupported decorator type: %+v", t))
 	}
 }
 
@@ -139,6 +167,10 @@ func Decorate(s interface{}, descs ...Decorator) []interface{} {
 	for i := l - 1; i >= 0; i-- {
 		res = append(res, descs[i].After...)
 	}
+	// if there is no decorator, add step
+	if l == 0 {
+		res = append(res, s)
+	}
 	return res
 }
 
@@ -148,10 +180,46 @@ func (d *Decorator) String() string {
 	return string(b[:])
 }
 
+//TODO
+func (d Decorator) Equal(i interface{}) bool {
+	switch v := i.(type) {
+	case Decorator:
+		return false
+	case *Decorator:
+		return false
+	default:
+		fmt.Printf("unsupported type %s\n", v)
+	}
+	return true
+}
+
 func GetDecoratorsFromString(data string) Decorators {
 	r := Decorators{}
 
 	err := yaml.Unmarshal([]byte(data), &r)
 	berror.CheckError(err)
 	return r
+}
+
+func GetLocalDecorators(target string) Decorators {
+	targetDir := filepath.Join(target, decoratorsDir)
+	ioutils.CreateDirIfNotExist(targetDir)
+	targetFile := filepath.Join(targetDir, decoratorsFile)
+	ioutils.CreateFileIfNotExist(targetFile)
+	content := ioutils.ReadFile(targetFile)
+	decs := GetDecoratorsFromString(content)
+	resSet := types.NewSet()
+	for _, d := range decs.Decorators {
+		resSet.Add(d)
+	}
+	res := Decorators{}
+	for _, d := range resSet.Get() {
+		switch v := d.(type) {
+		case Decorator:
+			res.Decorators = append(res.Decorators, v)
+		default:
+			fmt.Printf("unsupported type %s\n", v)
+		}
+	}
+	return res
 }

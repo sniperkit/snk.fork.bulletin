@@ -9,6 +9,12 @@ type Jobs struct {
 	Jobs []Job `yaml:"jobs"`
 }
 
+func (j *Jobs) String() string {
+	b, err := yaml.Marshal(*j)
+	berror.CheckError(err)
+	return string(b[:])
+}
+
 type JobBase struct {
 	Name string `yaml:"name"`
 	// optional fields
