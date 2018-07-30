@@ -40,10 +40,11 @@ func GetJobsFromString(data string) Jobs {
 }
 
 type JobRef struct {
-	Plan        []StepRef `yaml:"plan"`
-	job.JobBase `yaml:",inline"`
-	//Decorators []FuncRef `yaml:"decorators,omitempty"`
-	cache map[string]int
+	Plan          []StepRef `yaml:"plan"`
+	job.JobBase   `yaml:",inline"`
+	job.StepHooks `yaml:",inline"`
+	Decorators    []template.TemplateRef `yaml:"decorators,omitempty"`
+	cache         map[string]int
 }
 
 func (j *JobRef) String() string {
@@ -52,12 +53,21 @@ func (j *JobRef) String() string {
 	return string(b[:])
 }
 
-func (j *JobRef) AddDecorator(task string, d template.TemplateRef) {
+func (j *JobRef) buildCache() {
 	if j.cache == nil {
 		j.cache = make(map[string]int)
 		for i, s := range j.Plan {
 			j.cache[s.Name] = i
 		}
+	}
+
+}
+
+func (j *JobRef) AddDecorator(task string, d template.TemplateRef) {
+	j.buildCache()
+	// this is a job decorator
+	if task == "" {
+		j.Decorators = append(j.Decorators, d)
 	}
 	i, ok := j.cache[task]
 	if !ok {
@@ -120,7 +130,40 @@ func (j *JobRef) Convert(decs Decorators, ss Steps) job.Job {
 		// get real step
 		st, err := sref.DeRef(decs, ss)
 		berror.CheckError(err)
-		res.Plan = append(res.Plan, st...)
+		// aggregate step is the first step
+		for _, step := range st {
+			b, err := yaml.Marshal(step)
+			berror.CheckError(err)
+			t, err := job.GetType(string(b[:]))
+			berror.CheckError(err)
+			switch t {
+			case job.AggregateStepType:
+				steps, err := job.GetAggregateStep(step)
+				berror.CheckError(err)
+				res.Plan = append([]interface{}{&steps}, res.Plan...)
+			default:
+				res.Plan = append(res.Plan, step)
+			}
+		}
 	}
+
+	// dereference job decorators
+	for _, dref := range j.Decorators {
+		d, err := decs.Populate(dref)
+		berror.CheckError(err)
+		if d.OnSuccess != nil {
+			res.OnSuccess = d.OnSuccess
+		}
+		if d.OnFailure != nil {
+			res.OnFailure = d.OnFailure
+		}
+		if d.OnAbort != nil {
+			res.OnAbort = d.OnAbort
+		}
+		if d.Ensure != nil {
+			res.Ensure = d.Ensure
+		}
+	}
+
 	return res
 }

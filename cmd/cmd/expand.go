@@ -20,6 +20,7 @@ func expandRun(cmd *cobra.Command, args []string) error {
 	datas := ioutils.ReadFileDefaultStdin(pipeline)
 	// update resource types
 	jobs := bulletin_types.GetJobsFromString(datas)
+	deps := bulletin_types.GetDepsFromString(datas)
 	savedDecs := bulletin_types.GetLocalDecorators(expandTarget)
 	savedSteps := bulletin_types.GetLocalSteps(expandTarget)
 
@@ -32,6 +33,9 @@ func expandRun(cmd *cobra.Command, args []string) error {
 	}
 
 	cjobs := jobs.Convert(savedDecs, savedSteps)
+	for _, d := range deps.Deps {
+		d.AddResource(cjobs)
+	}
 	fmt.Printf("%s\n", cjobs.String())
 	return nil
 }

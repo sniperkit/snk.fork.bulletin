@@ -2,9 +2,9 @@ package job
 
 import (
 	"errors"
-	"fmt"
 
 	berror "github.com/maplain/bulletin/pkg/error"
+	"github.com/maplain/bulletin/pkg/types"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -14,10 +14,12 @@ const (
 	GetStepType Type = iota
 	PutStepType
 	TaskStepType
-	AggregateSteptype
+	AggregateStepType
 	DoStepType
 	TryStepType
 	UnrecognizedType
+
+	TypeNotSupportedError types.InternalError = "specified type is not supported"
 )
 
 type Step struct {
@@ -49,6 +51,12 @@ type GetStep struct {
 	Trigger  bool        `yaml:"trigger,omitempty"`
 }
 
+func (s *GetStep) String() string {
+	b, err := yaml.Marshal(*s)
+	berror.CheckError(err)
+	return string(b[:])
+}
+
 type PutStep struct {
 	Step `yaml:",inline"`
 	Put  string `yaml:"put"`
@@ -76,6 +84,12 @@ type AggregateStep struct {
 	Aggregate []interface{} `yaml:"aggregate"`
 }
 
+func (s *AggregateStep) String() string {
+	b, err := yaml.Marshal(*s)
+	berror.CheckError(err)
+	return string(b[:])
+}
+
 type DoStep struct {
 	Step `yaml:",inline"`
 	Do   []interface{} `yaml:"do"`
@@ -99,7 +113,7 @@ func GetType(s string) (Type, error) {
 	} else if _, ok := res["task"]; ok {
 		return TaskStepType, nil
 	} else if _, ok := res["aggregate"]; ok {
-		return AggregateSteptype, nil
+		return AggregateStepType, nil
 	} else if _, ok := res["do"]; ok {
 		return DoStepType, nil
 	} else if _, ok := res["try"]; ok {
@@ -123,7 +137,7 @@ func GetTaskStep(s interface{}) (TaskStep, error) {
 	case TaskStepType:
 		return getTaskStepFromString(string(d)), nil
 	default:
-		return TaskStep{}, errors.New(fmt.Sprintf("not a task Step"))
+		return TaskStep{}, errors.New("not a task Step")
 	}
 }
 
@@ -147,7 +161,7 @@ func GetPutStep(s interface{}) (PutStep, error) {
 	case PutStepType:
 		return getPutStepFromString(string(d)), nil
 	default:
-		return PutStep{}, errors.New(fmt.Sprintf("not a put Step"))
+		return PutStep{}, errors.New("not a put Step")
 	}
 }
 
@@ -156,4 +170,127 @@ func getPutStepFromString(data string) PutStep {
 	err := yaml.Unmarshal([]byte(data), &j)
 	berror.CheckError(err)
 	return j
+}
+
+func GetGetStep(s interface{}) (GetStep, error) {
+	d, err := yaml.Marshal(&s)
+	if err != nil {
+		return GetStep{}, err
+	}
+	t, err := GetType(string(d))
+	if err != nil {
+		return GetStep{}, err
+	}
+	switch t {
+	case GetStepType:
+		return getGetStepFromString(string(d)), nil
+	default:
+		return GetStep{}, errors.New("not a get Step")
+	}
+}
+
+func getGetStepFromString(data string) GetStep {
+	j := GetStep{}
+	err := yaml.Unmarshal([]byte(data), &j)
+	berror.CheckError(err)
+	return j
+}
+
+func GetAggregateStep(s interface{}) (AggregateStep, error) {
+	d, err := yaml.Marshal(&s)
+	if err != nil {
+		return AggregateStep{}, err
+	}
+	t, err := GetType(string(d))
+	if err != nil {
+		return AggregateStep{}, err
+	}
+	switch t {
+	case AggregateStepType:
+		return getAggregateStepFromString(string(d)), nil
+	default:
+		return AggregateStep{}, errors.New("not a aggregate Step")
+	}
+}
+
+func getAggregateStepFromString(data string) AggregateStep {
+	j := AggregateStep{}
+	err := yaml.Unmarshal([]byte(data), &j)
+	berror.CheckError(err)
+	return j
+}
+
+func GetDoStep(s interface{}) (DoStep, error) {
+	d, err := yaml.Marshal(&s)
+	if err != nil {
+		return DoStep{}, err
+	}
+	t, err := GetType(string(d))
+	if err != nil {
+		return DoStep{}, err
+	}
+	switch t {
+	case DoStepType:
+		return getDoStepFromString(string(d)), nil
+	default:
+		return DoStep{}, errors.New("not a do Step")
+	}
+}
+
+func getDoStepFromString(data string) DoStep {
+	j := DoStep{}
+	err := yaml.Unmarshal([]byte(data), &j)
+	berror.CheckError(err)
+	return j
+}
+
+func GetTryStep(s interface{}) (TryStep, error) {
+	d, err := yaml.Marshal(&s)
+	if err != nil {
+		return TryStep{}, err
+	}
+	t, err := GetType(string(d))
+	if err != nil {
+		return TryStep{}, err
+	}
+	switch t {
+	case TryStepType:
+		return getTryStepFromString(string(d)), nil
+	default:
+		return TryStep{}, errors.New("not a try Step")
+	}
+}
+
+func getTryStepFromString(data string) TryStep {
+	j := TryStep{}
+	err := yaml.Unmarshal([]byte(data), &j)
+	berror.CheckError(err)
+	return j
+}
+
+func GetStepName(i interface{}) (string, error) {
+	s, err := yaml.Marshal(&i)
+	if err != nil {
+		return "", err
+	}
+	t, err := GetType(string(s))
+	if err != nil {
+		return "", err
+	}
+	switch t {
+	case PutStepType:
+		tv, err := GetPutStep(i)
+		berror.CheckError(err)
+		return tv.Put, nil
+	case GetStepType:
+		tv, err := GetGetStep(i)
+		berror.CheckError(err)
+		return tv.Get, nil
+	case TaskStepType:
+		tv, err := GetTaskStep(i)
+		berror.CheckError(err)
+		return tv.Task, nil
+	default:
+		return "", TypeNotSupportedError
+	}
 }

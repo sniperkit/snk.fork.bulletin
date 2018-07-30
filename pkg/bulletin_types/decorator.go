@@ -44,7 +44,11 @@ type StepDecoratorDef struct {
 
 func (d *StepDecoratorDef) GetJobTask(s string) (string, string) {
 	res := strings.Split(s, "/")
-	if len(res) != 2 {
+	if len(res) == 2 {
+		return res[0], res[1]
+	} else if len(res) == 1 {
+		return res[0], ""
+	} else {
 		log.Fatalf("error: invalid decorate target %s", s)
 	}
 	return res[0], res[1]
@@ -161,6 +165,12 @@ func (d *Decorator) Decorate(s interface{}) (interface{}, error) {
 		if d.OnFailure != nil {
 			task.OnFailure = d.OnFailure
 		}
+		if d.OnAbort != nil {
+			task.OnAbort = d.OnAbort
+		}
+		if d.Ensure != nil {
+			task.Ensure = d.Ensure
+		}
 		return task, nil
 	case job.TaskStepType:
 		//	case job.AggregateSteptype:
@@ -178,6 +188,12 @@ func (d *Decorator) Decorate(s interface{}) (interface{}, error) {
 		if d.OnFailure != nil {
 			task.OnFailure = d.OnFailure
 		}
+		if d.OnAbort != nil {
+			task.OnAbort = d.OnAbort
+		}
+		if d.Ensure != nil {
+			task.Ensure = d.Ensure
+		}
 		return task, nil
 	default:
 		return s, errors.New(fmt.Sprintf("unsupported decorator type: %+v", t))
@@ -187,16 +203,16 @@ func (d *Decorator) Decorate(s interface{}) (interface{}, error) {
 func Decorate(s interface{}, descs ...Decorator) []interface{} {
 	var res []interface{}
 	l := len(descs)
+	// added as interface{}
 	for i := 0; i < l; i++ {
 		res = append(res, descs[i].Before...)
 	}
 	for _, d := range descs {
 		ds, err := d.Decorate(s)
-		if err != nil {
-			fmt.Printf("err %s\n", err.Error())
-		}
+		berror.CheckError(err)
 		res = append(res, ds)
 	}
+	// added as interface{}
 	for i := l - 1; i >= 0; i-- {
 		res = append(res, descs[i].After...)
 	}

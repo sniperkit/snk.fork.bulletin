@@ -129,3 +129,9 @@ func (o *SimpleSet) Add(t Comparable) {
 		o.ca = append(o.ca, t)
 	}
 }
+
+type InternalError string
+
+func (i InternalError) Error() string {
+	return string(i)
+}
