@@ -85,13 +85,17 @@ func (j *Job) String() string {
 	return string(b[:])
 }
 
+//TODO: improve this part
+// it's crucial to have item in cache to be the pointer of object in Plan
+// otherwise any change on item fetched from cache would not manifest itself
+// on Job object
 func (j *Job) buildCache() {
 	if j.typeCache == nil {
 		j.typeCache = make(map[Type][]interface{})
 	}
 	if j.stepCache == nil {
 		j.stepCache = make(map[Type]map[string]interface{})
-		for _, p := range j.Plan {
+		for i, p := range j.Plan {
 			s, err := yaml.Marshal(&p)
 			berror.CheckError(err)
 			t, _ := GetType(string(s))
@@ -112,6 +116,7 @@ func (j *Job) buildCache() {
 				tv, err := GetDoStep(p)
 				berror.CheckError(err)
 				j.typeCache[t] = append(j.typeCache[t], &tv)
+				j.Plan[i] = &tv
 				for _, as := range tv.Do {
 					n, err := GetStepName(as)
 					berror.CheckError(err)
@@ -121,6 +126,7 @@ func (j *Job) buildCache() {
 				tv, err := GetTryStep(p)
 				berror.CheckError(err)
 				j.typeCache[t] = append(j.typeCache[t], &tv)
+				j.Plan[i] = &tv
 				for _, as := range tv.Try {
 					n, err := GetStepName(as)
 					berror.CheckError(err)
@@ -130,6 +136,7 @@ func (j *Job) buildCache() {
 				tv, err := GetAggregateStep(p)
 				berror.CheckError(err)
 				j.typeCache[t] = append(j.typeCache[t], &tv)
+				j.Plan[i] = &tv
 				for _, as := range tv.Aggregate {
 					n, err := GetStepName(as)
 					berror.CheckError(err)

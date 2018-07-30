@@ -65,6 +65,9 @@ func (req *Requirements) AddResource(name string, jobs job.Jobs) error {
 		if i >= 1 {
 			getStep.Passed = append(getStep.Passed, (*req)[i-1].Name)
 		}
+		for _, d := range ref.Deps {
+			getStep.Passed = append(getStep.Passed, d)
+		}
 		if ref.aggregatableB {
 			aggregateSteps := oldj.GetStepsByType(job.AggregateStepType)
 			if len(aggregateSteps) == 0 {
@@ -119,6 +122,7 @@ type DepJobRef struct {
 	Trigger            bool                   `yaml:"trigger,omitempty"`
 	AggregatableString string                 `yaml:"aggregatable,omitempty"`
 	aggregatableB      bool
+	Deps               []string `yaml:"deps,omitempty"`
 }
 
 func (d *DepJobRef) SetDefault() DepJobRef {
