@@ -1,10 +1,16 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package bulletin_types
 
 import (
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/job"
 	template "github.com/maplain/yamltemplate"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/job"
 )
 
 type Jobs struct {

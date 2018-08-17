@@ -1,3 +1,8 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package cmd
 
 import (
@@ -5,9 +10,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/maplain/bulletin/pkg/ioutils"
-	ppl "github.com/maplain/bulletin/pkg/pipeline"
 	"github.com/spf13/cobra"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	ppl "github.com/sniperkit/snk.fork.bulletin/pkg/pipeline"
 )
 
 var updateCmd = &cobra.Command{

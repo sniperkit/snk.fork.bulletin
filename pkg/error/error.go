@@ -1,6 +1,13 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package error
 
-import "log"
+import (
+	"log"
+)
 
 func CheckError(e error) {
 	if e != nil {

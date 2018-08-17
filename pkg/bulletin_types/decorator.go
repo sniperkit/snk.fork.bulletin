@@ -1,3 +1,8 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package bulletin_types
 
 import (
@@ -7,12 +12,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/ioutils"
-	"github.com/maplain/bulletin/pkg/job"
-	"github.com/maplain/bulletin/pkg/types"
 	template "github.com/maplain/yamltemplate"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/job"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/types"
 )
 
 const (

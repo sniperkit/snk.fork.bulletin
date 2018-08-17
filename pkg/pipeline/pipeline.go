@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package pipeline
 
 import (
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/group"
-	"github.com/maplain/bulletin/pkg/job"
-	"github.com/maplain/bulletin/pkg/resource"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/group"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/job"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/resource"
 )
 
 type Pipeline struct {

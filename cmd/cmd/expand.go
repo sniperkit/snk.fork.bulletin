@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package cmd
 
 import (
 	"fmt"
 
-	"github.com/maplain/bulletin/pkg/bulletin_types"
-	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/spf13/cobra"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/bulletin_types"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
 )
 
 var expandCmd = &cobra.Command{

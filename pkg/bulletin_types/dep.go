@@ -1,12 +1,18 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package bulletin_types
 
 import (
 	"fmt"
 	"strconv"
 
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/job"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/job"
 )
 
 type Deps struct {

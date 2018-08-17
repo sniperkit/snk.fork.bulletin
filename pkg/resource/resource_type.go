@@ -1,3 +1,8 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package resource
 
 import (
@@ -6,9 +11,10 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/maplain/bulletin/pkg/ioutils"
-	"github.com/maplain/bulletin/pkg/types"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/types"
 )
 
 const (

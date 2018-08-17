@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package cmd
 
 import (
 	"fmt"
 
-	"github.com/maplain/bulletin/pkg/ioutils"
-	"github.com/maplain/bulletin/pkg/job"
 	"github.com/spf13/cobra"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/job"
 )
 
 var jobListCmd = &cobra.Command{

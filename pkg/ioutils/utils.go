@@ -1,10 +1,15 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package ioutils
 
 import (
 	"io/ioutil"
 	"os"
 
-	berror "github.com/maplain/bulletin/pkg/error"
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
 )
 
 func ReadFile(name string) string {

@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package job
 
 import (
 	"log"
 
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/types"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/types"
 )
 
 const (

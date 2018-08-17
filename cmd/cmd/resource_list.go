@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package cmd
 
 import (
 	"fmt"
 
-	"github.com/maplain/bulletin/pkg/ioutils"
-	"github.com/maplain/bulletin/pkg/resource"
 	"github.com/spf13/cobra"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/resource"
 )
 
 var resourceListCmd = &cobra.Command{

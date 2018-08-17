@@ -1,3 +1,8 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package resource
 
 import (
@@ -6,10 +11,11 @@ import (
 	"log"
 	"path/filepath"
 
-	berror "github.com/maplain/bulletin/pkg/error"
-	"github.com/maplain/bulletin/pkg/ioutils"
-	"github.com/maplain/bulletin/pkg/types"
 	yaml "gopkg.in/yaml.v2"
+
+	berror "github.com/sniperkit/snk.fork.bulletin/pkg/error"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/types"
 )
 
 const (

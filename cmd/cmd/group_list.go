@@ -1,11 +1,17 @@
+/*
+Sniperkit-Bot
+- Status: analyzed
+*/
+
 package cmd
 
 import (
 	"fmt"
 
-	"github.com/maplain/bulletin/pkg/group"
-	"github.com/maplain/bulletin/pkg/ioutils"
 	"github.com/spf13/cobra"
+
+	"github.com/sniperkit/snk.fork.bulletin/pkg/group"
+	"github.com/sniperkit/snk.fork.bulletin/pkg/ioutils"
 )
 
 var groupListCmd = &cobra.Command{
